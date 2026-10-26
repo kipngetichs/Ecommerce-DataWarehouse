@@ -1,3 +1,5 @@
+
+
 SELECT  CAST(ISNULL(order_id,'N/A')AS VARCHAR(50)) AS order_id
       
   ,      CAST 
@@ -28,12 +30,24 @@ SELECT  CAST(ISNULL(order_id,'N/A')AS VARCHAR(50)) AS order_id
    END,0)AS INT) AS quantity
       ,CAST(ISNULL(CAST(unit_price AS FLOAT),0) AS FLOAT) AS unit_price
       ,CAST(ISNULL(CAST(discount_pct AS FLOAT),0) AS FLOAT) AS discount_pct
-      ,[sales_amount]
-      ,[profit]
-      ,[shipping_cost]
-      ,[payment_method]
-      ,[customer_satisfaction]
-      ,[return_flag]
-      ,[order_status]
-      ,[days_to_ship]
+      ,CAST(
+        CASE
+            WHEN TRY_CAST(quantity AS DECIMAL(18, 2)) IS NOT NULL
+             AND TRY_CAST(unit_price AS DECIMAL(18, 2)) IS NOT NULL
+             AND TRY_CAST(discount_pct AS DECIMAL(18, 4)) IS NOT NULL
+            THEN
+                TRY_CAST(quantity AS DECIMAL(18, 2))
+                * TRY_CAST(unit_price AS DECIMAL(18, 2))
+                * (1 - TRY_CAST(discount_pct AS DECIMAL(18, 4)))
+            ELSE TRY_CAST(sales_amount AS DECIMAL(18, 2))
+        END
+        AS DECIMAL(18, 2)
+    ) AS sales_amount
+      ,CAST(ISNULL(TRY_CAST(profit AS DECIMAL(18,2)),0) AS DECIMAL(18,2))AS profit
+      ,CAST(ISNULL(TRY_CAST(ABS(shipping_cost) AS DECIMAL(18,2)),0) AS DECIMAL(18,2)) AS shipping_cost
+      ,CAST(ISNULL(payment_method,'N/A') AS VARCHAR(50)) AS payment_method
+      ,CAST(ISNULL(TRY_CAST( customer_satisfaction AS DECIMAL(18,2)),0) AS INT)AS customer_satisfaction
+      ,CAST(TRY_CAST(return_flag AS BIT) AS BIT)AS return_flag
+      ,CAST(ISNULL(order_status,'N/A') AS VARCHAR(50))AS order_status
+      ,CAST(ISNULL(TRY_CAST(days_to_ship AS DECIMAL(18,2)),0) AS INT)days_to_ship
   FROM [EcommerceWarehouse].[bronze].[retail_sales_dataset]
